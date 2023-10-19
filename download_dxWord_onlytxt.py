@@ -64,51 +64,74 @@ print(driver.current_url)
 print(driver.window_handles,driver.current_window_handle)
 
 
-dl_element = driver.find_element(By.CLASS_NAME,'section-arrow').find_element(By.XPATH,'./dl//div[@class="chapter-item"]/div[@class="text-overflow"]')
-# \W是匹配所有的非字符非数字的字符，由于文件名中不能使用：，所以要用正则表达式替换掉
-title = re.sub('\W+','_',dl_element.get_attribute('title'))
+# dl_elements = driver.find_element(By.CLASS_NAME,'section-arrow').find_elements(By.XPATH,'./dl//div[@class="chapter-item"]/div[@class="text-overflow"]')
+dl_elements = driver.find_element(By.CLASS_NAME,'section-arrow').find_elements(By.XPATH,'./dl')
 
-'''！！！！！！！！注意：find_element会与实际元素相绑定，所以后续实际元素变化时，page_elements也会变化！！！！！！！！'''
-# 包含所有page元素
-page_elements = driver.find_element(By.CLASS_NAME,'pdfViewer').find_elements(By.CLASS_NAME, 'page')
+print(len(dl_elements))
+print(dl_elements)
 
-print('-'*30,'共有%d文档页'%len(page_elements),'-'*30)
+for i in dl_elements:
+    # driver.execute_script('win')
+    driver.execute_script("arguments[0].click();", i)
+    time.sleep(3)
+    print(i.get_attribute('innerHTML'))
+    print(i.text)
 
-'''
-    注意，由于网页限制，所以在爬取时，务必打开网页！！！！
-'''
-paragraph_list = []
-for i in range(len(page_elements)):
-    print(page_elements[i].get_attribute('data-loaded'))
-    if page_elements[i].get_attribute('data-loaded') == 'true':
-        # 查找page下，textLayer里的所有div
-        text_element_list = page_elements[i].find_elements(By.XPATH, './div[@class="textLayer"]/div')
-        # 获取每页的所有文本列表的内部文字
-        paragraph = [text_element.text.strip() for text_element in text_element_list]
-        paragraph_list.append(''.join(paragraph))
 
-        print('第%d页文档已获取完毕...' % int(page_elements[i].get_attribute('data-page-number')))
-        # 必须重新获取到“下一页”的元素才可以，否则点击过期元素无效
-        driver.find_element(By.XPATH, "//div[@class='pdf-view-toolbar']//div[@title='下一页']").click()
-        time.sleep(0.3)
 
-print('-'*30,'文档爬取结束','-'*30)
-print(f'{title}.txt')
+# for dl_element in dl_elements:
+#     # 点击章节，并加载页面
+#     dl_element.click()
+#     # 5s等待页面加载
+#     time.sleep(5)
+#
+#     # \W是匹配所有的非字符非数字的字符，由于文件名中不能使用：，所以要用正则表达式替换掉
+#     title = re.sub('\W+','_',dl_element.get_attribute('title'))
+#     print('..................正在爬取《%s》........................'%title)
+#
+#     '''！！！！！！！！注意：find_element会与实际元素相绑定，所以后续实际元素变化时，page_elements也会变化！！！！！！！！'''
+#     # 包含所有page元素
+#     page_elements = driver.find_element(By.CLASS_NAME,'pdfViewer').find_elements(By.CLASS_NAME, 'page')
+#
+#     while len(page_elements)==0:
+#         time.sleep(1)
+#         print('...等待页面加载中...  当前page_elements数量为%d'%len(page_elements))
+#
+#     print('-'*30,'共有%d文档页'%len(page_elements),'-'*30)
+#
+#     '''
+#         注意，由于网页限制，所以在爬取时，务必打开网页！！！！
+#     '''
+#     paragraph_list = []
+#     for i in range(len(page_elements)):
+#         print(page_elements[i].get_attribute('data-loaded'))
+#         if page_elements[i].get_attribute('data-loaded') == 'true':
+#             # 查找page下，textLayer里的所有div
+#             text_element_list = page_elements[i].find_elements(By.XPATH, './div[@class="textLayer"]/div')
+#             # 获取每页的所有文本列表的内部文字
+#             paragraph = [text_element.text.strip() for text_element in text_element_list]
+#             paragraph_list.append(''.join(paragraph))
+#
+#             print('第%d页文档已获取完毕...' % int(page_elements[i].get_attribute('data-page-number')))
+#             # 必须重新获取到“下一页”的元素才可以，否则点击过期元素无效
+#             driver.find_element(By.XPATH, "//div[@class='pdf-view-toolbar']//div[@title='下一页']").click()
+#             time.sleep(0.3)
+#
+#     text = ''.join(paragraph_list)
+#     # 对文本数据进行分割，并写入文档中
+#     split_text(
+#         text,
+#         delete_font_list=[
+#             # 这是每页的 标题
+#             '担当是责任进取是要求团结是基石开放是动力云网运营部（大数据和AI中心）a安全团队2022年1月大数据和AI中心员工安全培训1云网运营部（大数据和AI中心）担当是责任进取是要求团结是基石开放是动力',
+#             '\n',
+#             ' '
+#         ],
+#         save_path = f'data/{title}.txt'
+#     )
+#
+#     print('=' * 30, '文档爬取结束', '=' * 30)
 
-text = ''.join(paragraph_list)
-# 对文本数据进行分割，并写入文档中
-split_text(
-    text,
-    delete_font_list=[
-        # 这是每页的 标题
-        '担当是责任进取是要求团结是基石开放是动力云网运营部（大数据和AI中心）a安全团队2022年1月大数据和AI中心员工安全培训1云网运营部（大数据和AI中心）担当是责任进取是要求团结是基石开放是动力',
-        '\n',
-        ' '
-    ],
-    save_path = f'{title}.word'
-)
-
-# driver.execute_script('window.open("https://www.baidu.com")')
 
 '''
 pattern = r'(第\d+部分|^[一二三四五六七八九十]+、|^\d+、)'
